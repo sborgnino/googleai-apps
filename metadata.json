@@ -1,0 +1,7 @@
+{
+  "name": "VoiceFit AI",
+  "description": "Record workouts via voice, transcribe with AI, and track your progress with analytics.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
