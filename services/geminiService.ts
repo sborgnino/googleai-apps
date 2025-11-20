@@ -39,7 +39,7 @@ export const processWorkoutAudio = async (audioBlob: Blob): Promise<Partial<Work
         items: {
           type: Type.OBJECT,
           properties: {
-            name: { type: Type.STRING, description: "Standardized name of the exercise in English (e.g., 'Bench Press'). Translate if necessary." },
+            name: { type: Type.STRING, description: "Standardized name of the exercise in English (e.g., 'Bench Press'). Translate from Spanish/other languages if necessary." },
             sets: { type: Type.NUMBER, description: "Number of sets performed" },
             reps: { type: Type.NUMBER, description: "Number of repetitions per set" },
             weight: { type: Type.NUMBER, description: "Weight used in kg/lbs if mentioned" },
@@ -49,7 +49,7 @@ export const processWorkoutAudio = async (audioBlob: Blob): Promise<Partial<Work
         }
       },
       notes: { type: Type.STRING, description: "Any additional context regarding intensity, feelings, or specific details." },
-      raw_transcription: { type: Type.STRING, description: "Verbatim transcription of the audio in the spoken language (e.g., Spanish)." }
+      raw_transcription: { type: Type.STRING, description: "Verbatim transcription of the audio in the original spoken language (Spanish/English/etc)." }
     },
     required: ["exercises", "raw_transcription"]
   };
@@ -67,15 +67,28 @@ export const processWorkoutAudio = async (audioBlob: Blob): Promise<Partial<Work
           },
           {
             text: `
-              Analyze the audio recording of a workout session.
+              You are a professional fitness coach and translator. 
               
-              Steps:
-              1. Transcribe the spoken audio exactly as it is heard in the 'raw_transcription' field. Support English, Spanish, and other common languages.
-              2. Extract the exercises, sets, reps, weights, and durations into the 'exercises' array.
-              3. Normalize exercise names to English. For example, if the user says "Sentadillas", map it to "Squats". If "Press de Banca", map to "Bench Press".
-              4. If the date is not mentioned, use ${new Date().toISOString().split('T')[0]}.
+              Your task is to extract structured workout data from the provided audio recording.
               
-              Be accurate with numbers. Handle casual speech like "couple of sets of 10" (implies 2 sets).
+              **CRITICAL INSTRUCTIONS FOR SPANISH/MULTILINGUAL INPUT:**
+              1. **Detect Language**: The audio may be in **Spanish**, English, or mixed.
+              2. **Transcribe**: Write the **exact** words spoken in the 'raw_transcription' field. If the user speaks Spanish, the transcription MUST be in Spanish. Do NOT translate the transcription.
+              3. **Translate & Normalize**: When populating the 'exercises' array, translate exercise names to **English** standard terminology.
+                 - "Sentadillas" -> "Squats"
+                 - "Press de banca" -> "Bench Press"
+                 - "Dominadas" -> "Pull-ups"
+                 - "Correr" -> "Running"
+              4. **Extract Data**: Identify sets, reps, weight, and duration accurately.
+              5. **Defaults**: If date is missing, use ${new Date().toISOString().split('T')[0]}.
+              
+              Example Input (Spanish): "Hoy hice cinco series de diez sentadillas con 60 kilos."
+              Example Output JSON:
+              {
+                "date": "...",
+                "exercises": [{ "name": "Squats", "sets": 5, "reps": 10, "weight": 60 }],
+                "raw_transcription": "Hoy hice cinco series de diez sentadillas con 60 kilos."
+              }
             `
           }
         ]
@@ -83,7 +96,7 @@ export const processWorkoutAudio = async (audioBlob: Blob): Promise<Partial<Work
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        systemInstruction: "You are an expert fitness coach and linguist capable of understanding workout logs in multiple languages, especially Spanish and English."
+        systemInstruction: "You are a multilingual fitness assistant capable of understanding Spanish and English workout logs perfectly."
       }
     });
 

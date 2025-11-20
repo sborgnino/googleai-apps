@@ -16,6 +16,7 @@ export const RecordWorkout: React.FC = () => {
   
   // Refs for mutable data that doesn't need immediate re-renders or needs to avoid closure staleness
   const audioChunksRef = useRef<Blob[]>([]);
+  const mimeTypeRef = useRef<string>('audio/webm');
   const timerRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -72,6 +73,9 @@ export const RecordWorkout: React.FC = () => {
       
       const recorder = new MediaRecorder(audioStream);
       setMediaRecorder(recorder);
+      
+      // Store mimeType immediately for consistent use later
+      mimeTypeRef.current = recorder.mimeType;
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -112,7 +116,7 @@ export const RecordWorkout: React.FC = () => {
     setState(AppState.PROCESSING);
     try {
       // Use the ref here to ensure we have all chunks including the final one
-      const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder?.mimeType || 'audio/webm' });
+      const audioBlob = new Blob(audioChunksRef.current, { type: mimeTypeRef.current });
       const result = await processWorkoutAudio(audioBlob);
       setDraftSession(result);
       setState(AppState.REVIEW);
